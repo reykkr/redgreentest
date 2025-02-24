@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulaire de Test</title>
+  <link rel="stylesheet" href="css/redflagtest.css">
+</head>
+<body>
+  <div class="form-container">
+    <form id="quizForm">
+      <h2>Formulaire de Test</h2>
+      
+      <!-- Test Type Section (Buttons for long/short version) -->
+      <div id="testTypeButtons">
+        <button type="button" id="versionLongue" class="test-type-button active">Version longue (50 Questions)</button>
+        <button type="button" id="versionCourte" class="test-type-button">Version courte</button>
+      </div>
+
+      <!-- Categories Section (Visible only for short version) -->
+      <div id="categories" class="hidden">
+        <p>Sélectionnez une catégorie :</p>
+        <button type="button" id="vieSexuelle" class="category-button">Vie Sexuelle</button>
+        <button type="button" id="vieAmoureuse" class="category-button">Vie Amoureuse</button>
+        <button type="button" id="vieSociale" class="category-button">Vie Sociale</button>
+        <button type="button" id="viePro" class="category-button">Vie Pro</button>
+        <button type="button" id="vieHygienique" class="category-button">Vie Hygiénique</button>
+        <button type="button" id="viePolitique" class="category-button">Vie Politique</button>
+        <button type="button" id="vieAmoureuse2" class="category-button">Vie Amoureuse 2</button>
+      </div>
+
+      <br>
+      <button type="submit">Soumettre</button>
+      <br>
+      <button type="button" id="backHome" style="text-align: center; margin-top: 15px">Retour à l'accueil</button>
+
+    </form>
+  </div>
+
+  <div id="quizSection" style="display:none;">
+    <!-- Optional: Remove globalBack if not needed -->
+    <h2>Red Flag Test</h2>
+    <div id="quizQuestions"></div>
+    <div id="progress-container" style="text-align: center; margin: 10px 0;">
+      <p id="progress-text">Progress: 0/25</p>
+    </div>
+  </div>
+
+  <script src="js/redflagtest.js"></script>
+</body>
+</html>

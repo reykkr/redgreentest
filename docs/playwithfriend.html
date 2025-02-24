@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <title>Jouer avec des amis</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f8f9fa;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+      /* Conteneurs communs */
+      .container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        width: 300px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      /* Texte d'introduction */
+      #intro-text {
+        font-size: 16px;
+        color: #333;
+        margin-bottom: 15px;
+        line-height: 1.4;
+      }
+      /* Formulaire de configuration */
+      #players-container {
+        margin-bottom: 15px;
+      }
+      #player-inputs input {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      #player-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+      /* Boutons communs */
+      button {
+        margin-top: 15px;
+        width: 100%;
+        padding: 10px;
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      /* Boutons de gestion des joueurs */
+      #player-buttons button {
+        width: 48%;
+        margin-top: 0;
+      }
+      /* Message d'erreur */
+      #error-message {
+        color: red;
+        margin-top: 10px;
+      }
+    /* Interfaces diverses */
+    #game-container, 
+    #voting-container, 
+    #results-container,
+    #highlights-container,
+    #recap-container {
+      display: none;
+    }
+    #question {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+    #player-info {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    #timer {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 20px;
+      color: green;
+    }
+    /* Section récapitulative finale */
+    #end-game-section {
+      margin-top: 20px;
+    }
+    #end-game-section h2 {
+      margin-bottom: 10px;
+    }
+    #end-game-section button {
+      margin-top: 10px;
+    }
+    /* Section Highlights */
+    #highlights-container h2 {
+      margin-bottom: 10px;
+    }
+    #highlights-container p {
+      margin: 5px 0;
+    }
+    /* Section Récap par question */
+    #recap-container h2 {
+      margin-bottom: 10px;
+    }
+    #recap-container .round {
+      margin-bottom: 15px;
+      text-align: left;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+    }
+    #recap-container .round h3 {
+      margin: 5px 0;
+    }
+    #recap-container .round p {
+      margin: 3px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Formulaire de configuration avec introduction -->
+  <div id="form-container" class="container">
+    <div id="intro-text">
+      <strong>Bienvenue dans "Jouer avec des amis" !</strong><br><br>
+      Ce jeu vous met, vous et vos amis, au défi de partager vos histoires les plus osées et de voter pour celles des autres. À chaque round, une question surprenante est posée et chaque joueur dispose d'un temps limité pour répondre. Une fois les réponses données, tous les participants évaluent les histoires à l'aide d'un curseur allant de 0 (green flag) à 100 (red flag). Les scores sont compilés pour révéler des statistiques amusantes et des moments forts du jeu.<br><br>
+      Prêts à dévoiler vos secrets et à rire ensemble ?
+    </div>
+    <form id="form-jeu">
+      <div id="players-container">
+        <div id="player-inputs">
+          <input type="text" placeholder="Nom du joueur 1" id="player_0" name="player_0" required>
+        </div>
+        <div id="player-buttons">
+          <button type="button" id="remove-player" disabled>Retirer joueur</button>
+          <button type="button" id="add-player">Ajouter joueur</button>
+        </div>
+      </div>
+      <label for="temps-par-joueur">Temps par joueur :</label>
+      <select id="temps-par-joueur" name="temps_par_joueur" required>
+        <option value="30">30 secondes par joueur</option>
+        <option value="60">1 minute par joueur</option>
+        <option value="90">1 minute 30 par joueur</option>
+      </select>
+      <button type="submit">Commencer le jeu</button>
+      <!-- Message d'erreur pour le formulaire -->
+      <div id="error-message"></div>
+      <button type="button" id="return-home" onclick="location.href='index.html'">Retour à l'accueil</button>
+    </form>
+  </div>
+
+  <!-- Interface du jeu -->
+  <div id="game-container" class="container">
+    <h1>Jeu : Jouer avec des amis</h1>
+    <div id="question"></div>
+    <div id="player-info">C'est le tour de : <span id="player-name"></span></div>
+    <div id="timer">Temps restant : <span id="time-left"></span> secondes</div>
+    <button id="end-turn">Fin du tour</button>
+    <button id="end-game">Fin de la partie</button>
+    <div id="message"></div>
+  </div>
+
+  <!-- Interface de vote -->
+  <div id="voting-container" class="container">
+    <h1>Votez pour les histoires</h1>
+    <div id="voting-instructions">C'est le tour de : <span id="voter-name"></span></div>
+    <form id="voting-form">
+      <div id="voting-list"></div>
+      <button type="submit">Soumettre vos votes</button>
+    </form>
+  </div>
+
+  <!-- Interface de résultats -->
+  <div id="results-container" class="container">
+    <h1>Résultats du tour</h1>
+    <div id="results-list"></div>
+    <button id="next-question">Nouvelle question</button>
+    <button id="end-game-recap">Fin de la partie et récapitulatif</button>
+    <!-- Section récapitulative finale -->
+    <div id="end-game-section" style="display: none;">
+      <h2>Récapitulatif final</h2>
+      <div id="final-results"></div>
+      <button id="highlights-btn">Highlights du jeu</button>
+      <button id="recap-by-question-btn">Récap par question</button>
+      <button id="restart-game-btn">Recommencer une nouvelle partie</button>
+    </div>
+  </div>
+
+  <!-- Interface des Highlights -->
+  <div id="highlights-container" class="container">
+    <h2>Highlights</h2>
+    <div id="highlight-1"></div>
+    <div id="highlight-2"></div>
+    <div id="highlight-3"></div>
+    <button id="back-to-results">Retour aux résultats généraux</button>
+  </div>
+
+  <!-- Interface du Récap par question -->
+  <div id="recap-container" class="container">
+    <h2>Récapitulatif par question</h2>
+    <div id="recap-content"></div>
+    <button id="back-to-general">Retour aux résultats généraux</button>
+  </div>
+
+  <script>
+    // Variables globales pour cumul, rounds et highlights
+    let cumulativeTotals = [];
+    let cumulativeCounts = [];
+    let givenTotals = [];
+    let highestPerPlayer = [];
+    let lowestPerPlayer = [];
+    let roundCount = 0;
+    let roundsData = []; // Stocke les données de chaque round
+    let currentVoterIndex = 0;
+    let votes = []; // Votes pour le tour en cours
+    let currentQuestion = "";
+
+    // -------------------------------
+    // Gestion de la configuration des joueurs
+    // -------------------------------
+    const addPlayerButton = document.getElementById('add-player');
+    const removePlayerButton = document.getElementById('remove-player');
+    const playerInputsContainer = document.getElementById('player-inputs');
+
+    addPlayerButton.addEventListener('click', () => {
+      const numPlayers = playerInputsContainer.children.length;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = 'player_' + numPlayers;
+      input.name = 'player_' + numPlayers;
+      input.placeholder = 'Nom du joueur ' + (numPlayers + 1);
+      input.required = true;
+      playerInputsContainer.appendChild(input);
+      if (playerInputsContainer.children.length > 1) {
+        removePlayerButton.disabled = false;
+      }
+    });
+
+    removePlayerButton.addEventListener('click', () => {
+      const numPlayers = playerInputsContainer.children.length;
+      if (numPlayers > 1) {
+        playerInputsContainer.removeChild(playerInputsContainer.lastElementChild);
+      }
+      if (playerInputsContainer.children.length === 1) {
+        removePlayerButton.disabled = true;
+      }
+    });
+
+    // -------------------------------
+    // Démarrage du jeu (formulaire)
+    // -------------------------------
+    const formJeu = document.getElementById('form-jeu');
+    formJeu.addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Effacer le message d'erreur précédent
+      document.getElementById('error-message').innerHTML = "";
+      
+      const playerInputs = document.querySelectorAll('#player-inputs input');
+      // Vérifier qu'il y a au moins 2 joueurs
+      if (playerInputs.length < 2) {
+        document.getElementById('error-message').innerHTML = "Veuillez ajouter au moins 2 joueurs.";
+        return;
+      }
+      
+      const players = [];
+      playerInputs.forEach(input => {
+         players.push(input.value);
+      });
+      const timePerPlayer = parseInt(document.getElementById('temps-par-joueur').value);
+      window.gameData = { players, timePerPlayer };
+
+      // Initialiser les cumulés et tableaux pour highlights
+      cumulativeTotals = new Array(players.length).fill(0);
+      cumulativeCounts = new Array(players.length).fill(0);
+      givenTotals = new Array(players.length).fill(0);
+      highestPerPlayer = new Array(players.length).fill(null);
+      lowestPerPlayer = new Array(players.length).fill(null);
+      roundCount = 0;
+      roundsData = [];
+
+      document.getElementById('form-container').style.display = 'none';
+      document.getElementById('game-container').style.display = 'block';
+      initGame();
+    });
+
+    // -------------------------------
+    // Partie jeu
+    // -------------------------------
+    const questions = [
+      "Quelle est la chose la plus toxique que tu as faite dans une relation sans te sentir coupable sur le moment ?",
+      "Raconte une fois où tu as volontairement manipulé quelqu’un pour obtenir ce que tu voulais.",
+      "Tu as déjà mené quelqu’un en bateau en sachant très bien que tu n’étais pas intéressé(e) ? Comment ça s’est terminé ?",
+      "As-tu déjà 'oublié' de dire à quelqu’un que tu étais en couple ? Raconte comment ça s’est passé.",
+      "Raconte la fois où tu as brisé le plus de cœurs en même temps.",
+      "Tu as déjà flirté avec quelqu’un uniquement pour rendre jaloux ton/ta partenaire ? Comment ça a tourné ?",
+      "Quelle est la chose la plus borderline que tu as faite après une rupture ?",
+      "Tu as déjà tourné une dispute à ton avantage alors que tu savais que tu avais tort ? Comment t’y es pris(e) ?",
+      "As-tu déjà volontairement 'oublié' de bloquer un(e) ex juste pour voir s’il/elle reviendrait vers toi ? Qu’est-ce qui s’est passé ?",
+      "Quelle est la fois où tu as été le plus toxique sur les réseaux sociaux (stalking, faux comptes, messages cryptiques…) ?",
+      "Raconte une fois où tu as menti à propos de tes intentions juste pour coucher avec quelqu’un.",
+      "Quelle est la pire chose que tu as dite à quelqu’un juste pour le/la faire culpabiliser et obtenir ce que tu voulais ?",
+      "Tu as déjà ghosté quelqu’un après l’avoir ramené(e) chez toi ? Comment tu t’es échappé(e) ?",
+      "Raconte une fois où tu as trahi un(e) pote pour une histoire de crush ou de sexe.",
+      "Tu as déjà fait semblant d’avoir des sentiments juste pour garder quelqu’un sous le coude ? Quelle était ta stratégie ?",
+      "Quelle est la fois où tu as été le plus(e) hypocrite dans une relation ?",
+      "Tu as déjà effacé des messages pour cacher quelque chose à ton/ta partenaire ? Quelle était l’histoire derrière ?",
+      "Quelle est la pire chose que tu as faite à quelqu’un qui était sincèrement attaché(e) à toi ?",
+      "Tu as déjà orchestré une rupture pour que l’autre pense que c’était de sa faute ? Comment as-tu fait ?",
+      "Quelle est la chose la plus horrible que tu as dite sur un(e) ex derrière son dos ?",
+      "Raconte une fois où tu as trompé quelqu’un et que tu as réussi à couvrir ça comme un(e) pro.",
+      "Tu as déjà fréquenté deux personnes en même temps sans qu’elles ne le sachent ? Comment tu t’en es sorti(e) ?",
+      "Quelle est la plus grosse manipulation que tu as faite dans une relation ?",
+      "Tu as déjà utilisé le sexe comme une arme dans une relation ? Comment et pourquoi ?",
+      "Tu as déjà été dans une relation où tu avais secrètement un(e) plan B ? Raconte.",
+      "Quelle est la fois où tu as volontairement cherché à briser quelqu’un émotionnellement ?",
+      "Tu as déjà trahi un(e) ami(e) pour du sexe ou une relation ? Comment tu t’es justifié(e) ?",
+      "Tu as déjà mis quelqu’un dans une situation ultra gênante en public juste pour prendre l’avantage ? Raconte.",
+      "Quelle est la chose la plus trash que tu as faite après une rupture ?",
+      "Tu as déjà fait en sorte que quelqu’un tombe amoureux(se) de toi juste pour ensuite le/la briser ?"
+    ];
+
+    let currentPlayerIndex = 0;
+    let currentTime = 0;
+    let timerInterval;
+
+    function updateUI() {
+      document.getElementById('player-name').textContent = window.gameData.players[currentPlayerIndex];
+      document.getElementById('time-left').textContent = currentTime;
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        currentTime--;
+        document.getElementById('time-left').textContent = currentTime;
+        if (currentTime <= 0) {
+          clearInterval(timerInterval);
+          nextTurn();
+        }
+      }, 1000);
+    }
+
+    function nextTurn() {
+      clearInterval(timerInterval);
+      if (currentPlayerIndex < window.gameData.players.length - 1) {
+        currentPlayerIndex++;
+        currentTime = window.gameData.timePerPlayer;
+        updateUI();
+        startTimer();
+      } else {
+        endGame();
+      }
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      document.getElementById('message').textContent = "La partie est terminée. Place au vote !";
+      setTimeout(() => {
+        document.getElementById('game-container').style.display = 'none';
+        startVoting();
+      }, 2000);
+    }
+
+    function initGame() {
+      currentQuestion = questions[Math.floor(Math.random() * questions.length)];
+      document.getElementById('question').textContent = currentQuestion;
+      currentTime = window.gameData.timePerPlayer;
+      updateUI();
+      startTimer();
+    }
+
+    document.getElementById('end-turn').addEventListener('click', nextTurn);
+    document.getElementById('end-game').addEventListener('click', endGame);
+
+    // -------------------------------
+    // Partie vote
+    // -------------------------------
+    function startVoting() {
+      document.getElementById('voting-container').style.display = 'block';
+      currentVoterIndex = 0;
+      showVotingForm();
+    }
+
+    function showVotingForm() {
+      const votingList = document.getElementById('voting-list');
+      votingList.innerHTML = '';
+      const voterName = window.gameData.players[currentVoterIndex];
+      document.getElementById('voter-name').textContent = voterName;
+      window.gameData.players.forEach((player, index) => {
+        if (index === currentVoterIndex) return; // Le joueur ne vote pas pour lui-même
+        const div = document.createElement('div');
+        div.style.marginBottom = "10px";
+        const label = document.createElement('label');
+        label.htmlFor = "vote_" + index;
+        label.textContent = player + " : ";
+        div.appendChild(label);
+        // Le slider passe de 0 à 100 (valeur par défaut 50)
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.min = 0;
+        input.max = 100;
+        input.step = 1;
+        input.value = 50;
+        input.id = "vote_" + index;
+        input.name = "vote_" + index;
+        div.appendChild(input);
+        const span = document.createElement('span');
+        span.textContent = input.value;
+        span.style.marginLeft = "10px";
+        input.addEventListener('input', function() {
+          span.textContent = this.value;
+        });
+        div.appendChild(span);
+        votingList.appendChild(div);
+      });
+    }
+
+    document.getElementById('voting-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      let voterVotes = {};
+      window.gameData.players.forEach((player, index) => {
+        if (index === currentVoterIndex) return;
+        const voteValue = parseInt(document.getElementById("vote_" + index).value);
+        voterVotes[index] = voteValue;
+      });
+      // Accumuler la somme des votes donnés par ce votant
+      let sumGiven = Object.values(voterVotes).reduce((a, b) => a + b, 0);
+      givenTotals[currentVoterIndex] += sumGiven;
+      votes.push(voterVotes);
+      if (currentVoterIndex < window.gameData.players.length - 1) {
+        currentVoterIndex++;
+        showVotingForm();
+      } else {
+        calculateResults();
+      }
+    });
+
+    function calculateResults() {
+      document.getElementById('voting-container').style.display = 'none';
+      let results = [];
+      // Calcul des résultats pour ce tour et mise à jour du cumul
+      window.gameData.players.forEach((player, playerIndex) => {
+        let sum = 0;
+        let count = 0;
+        votes.forEach((voterVotes, voterIndex) => {
+          if (voterIndex === playerIndex) return;
+          if (voterVotes.hasOwnProperty(playerIndex)) {
+            sum += voterVotes[playerIndex];
+            count++;
+          }
+        });
+        cumulativeTotals[playerIndex] += sum;
+        cumulativeCounts[playerIndex] += count;
+        // Calcul de la moyenne directement en pourcentage (0-100) sans décimales
+        let avg = count > 0 ? (sum / count) : 0;
+        results.push({ player, average: Math.round(avg) });
+        // Mise à jour des meilleurs et pires scores pour chaque joueur (en %)
+        if (!highestPerPlayer[playerIndex] || avg > highestPerPlayer[playerIndex].average) {
+          highestPerPlayer[playerIndex] = { average: avg, question: currentQuestion };
+        }
+        if (!lowestPerPlayer[playerIndex] || avg < lowestPerPlayer[playerIndex].average) {
+          lowestPerPlayer[playerIndex] = { average: avg, question: currentQuestion };
+        }
+      });
+      // Stocker les données de ce round pour le récapitulatif par question
+      roundsData.push({
+        round: roundCount + 1,
+        question: currentQuestion,
+        results: results
+      });
+      roundCount++;
+      showResults(results);
+    }
+
+    function showResults(results) {
+      document.getElementById('results-container').style.display = 'block';
+      const resultsList = document.getElementById('results-list');
+      resultsList.innerHTML = '';
+      results.forEach(result => {
+        const div = document.createElement('div');
+        div.style.marginBottom = "10px";
+        div.textContent = result.player + " : Moyenne des votes = " + result.average + "%";
+        resultsList.appendChild(div);
+      });
+    }
+
+    // -------------------------------
+    // Nouvelle question (redémarrage d'un tour)
+    // -------------------------------
+    function startNewRound() {
+      votes = []; // Réinitialiser les votes du tour en cours
+      currentPlayerIndex = 0;
+      document.getElementById('results-container').style.display = 'none';
+      document.getElementById('message').textContent = "";
+      document.getElementById('game-container').style.display = 'block';
+      initGame();
+      // Réafficher les boutons de tour
+      document.getElementById('next-question').style.display = 'block';
+      document.getElementById('end-game-recap').style.display = 'block';
+      document.getElementById('end-game-section').style.display = 'none';
+    }
+
+    document.getElementById('next-question').addEventListener('click', startNewRound);
+
+    // -------------------------------
+    // Fin de partie et récapitulatif général
+    // -------------------------------
+    document.getElementById('end-game-recap').addEventListener('click', function() {
+      // Calcul du cumul final pour chaque joueur en pourcentage sans décimales
+      let finalResults = window.gameData.players.map((player, index) => {
+        let avg = cumulativeCounts[index] > 0 ? (cumulativeTotals[index] / cumulativeCounts[index]) : 0;
+        return { player, average: Math.round(avg) };
+      });
+      // Tri décroissant (le meilleur score en haut)
+      finalResults.sort((a, b) => b.average - a.average);
+      const finalResultsDiv = document.getElementById('final-results');
+      finalResultsDiv.innerHTML = '';
+      finalResults.forEach((result, i) => {
+        const div = document.createElement('div');
+        div.style.marginBottom = "10px";
+        div.textContent = (i + 1) + ". " + result.player + " : Moyenne cumulée = " + result.average + "%";
+        finalResultsDiv.appendChild(div);
+      });
+      // Masquer les boutons de tour et afficher la section récapitulative finale
+      document.getElementById('next-question').style.display = 'none';
+      document.getElementById('end-game-recap').style.display = 'none';
+      document.getElementById('end-game-section').style.display = 'block';
+    });
+
+    // Boutons dans la section récapitulative finale
+    document.getElementById('highlights-btn').addEventListener('click', function() {
+      // Passer à la vue Highlights
+      document.getElementById('end-game-section').style.display = 'none';
+      document.getElementById('results-container').style.display = 'none';
+      document.getElementById('highlights-container').style.display = 'block';
+    });
+
+    document.getElementById('recap-by-question-btn').addEventListener('click', showRecapByQuestion);
+    document.getElementById('restart-game-btn').addEventListener('click', function() {
+      location.reload();
+    });
+
+    // -------------------------------
+    // Affichage des Highlights
+    // -------------------------------
+    document.getElementById('highlights-btn').addEventListener('click', function() {
+      let players = window.gameData.players;
+      let highestPercentage = -1;
+      let sensitivePlayer = "";
+      players.forEach((player, i) => {
+        let maxPossible = roundCount * (players.length - 1) * 100;
+        let percentage = maxPossible > 0 ? (givenTotals[i] / maxPossible) * 100 : 0;
+        if (percentage > highestPercentage) {
+          highestPercentage = percentage;
+          sensitivePlayer = player;
+        }
+      });
+      const h1Text = `<p>Highlight 1 : Le joueur le plus sensible est <strong>${sensitivePlayer}</strong> avec ${Math.round(highestPercentage)}% de red flags donnés.</p>`;
+      
+      let h2Text = "<p>Highlight 2 : Meilleur score reçu :</p>";
+      players.forEach((player, i) => {
+        if (highestPerPlayer[i]) {
+          h2Text += `<p>${player} a obtenu un score maximum de ${Math.round(highestPerPlayer[i].average)}% sur la question "${highestPerPlayer[i].question}"</p>`;
+        }
+      });
+      
+      let h3Text = "<p>Highlight 3 : Score le plus bas reçu :</p>";
+      players.forEach((player, i) => {
+        if (lowestPerPlayer[i]) {
+          h3Text += `<p>${player} a obtenu un score minimum de ${Math.round(lowestPerPlayer[i].average)}% sur la question "${lowestPerPlayer[i].question}"</p>`;
+        }
+      });
+      
+      document.getElementById('highlight-1').innerHTML = h1Text;
+      document.getElementById('highlight-2').innerHTML = h2Text;
+      document.getElementById('highlight-3').innerHTML = h3Text;
+      
+      document.getElementById('results-container').style.display = 'none';
+      document.getElementById('end-game-section').style.display = 'none';
+      document.getElementById('highlights-container').style.display = 'block';
+    });
+
+    // Bouton pour revenir aux résultats généraux depuis Highlights
+    document.getElementById('back-to-results').addEventListener('click', function() {
+      document.getElementById('highlights-container').style.display = 'none';
+      document.getElementById('results-container').style.display = 'block';
+      document.getElementById('end-game-section').style.display = 'block';
+    });
+
+    // -------------------------------
+    // Affichage du Récap par question
+    // -------------------------------
+    function showRecapByQuestion() {
+      const recapContent = document.getElementById('recap-content');
+      recapContent.innerHTML = "";
+      roundsData.forEach(round => {
+        const roundDiv = document.createElement('div');
+        roundDiv.className = "round";
+        roundDiv.innerHTML = `<h3>Round ${round.round}</h3>
+                              <p><strong>Question :</strong> ${round.question}</p>
+                              <p><strong>Résultats :</strong></p>`;
+        round.results.forEach(res => {
+          roundDiv.innerHTML += `<p>${res.player} : ${res.average}%</p>`;
+        });
+        recapContent.appendChild(roundDiv);
+      });
+      document.getElementById('results-container').style.display = 'none';
+      document.getElementById('end-game-section').style.display = 'none';
+      document.getElementById('recap-container').style.display = 'block';
+    }
+
+    // Bouton pour revenir aux résultats généraux depuis le récap par question
+    document.getElementById('back-to-general').addEventListener('click', function() {
+      document.getElementById('recap-container').style.display = 'none';
+      document.getElementById('results-container').style.display = 'block';
+      document.getElementById('end-game-section').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
